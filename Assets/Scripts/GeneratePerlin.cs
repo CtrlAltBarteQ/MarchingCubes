@@ -5,6 +5,8 @@ using Noise;
 
 public class GeneratePerlin : MonoBehaviour
 {
+    public KeyCode key;
+
     public Vector3 size;
     [Range(0f, 1f)]
     public float minValue = 0;
@@ -15,7 +17,10 @@ public class GeneratePerlin : MonoBehaviour
     public Color color;
     public bool useSimplex = true;
 
+    public GameObject chunkPrefab;
+
     public float noiseScale = .05f;
+    public float noiseScaleHeightmap = .05f;
 
     public bool sphere = false;
     private List<Mesh> meshes = new List<Mesh>();
@@ -52,7 +57,7 @@ public class GeneratePerlin : MonoBehaviour
         for (int x = 0; x < s.x; x++) { 
             for(int z = 0; z < s.z; z++)
             {
-                values[x, z] = (int)Mathf.Round(Mathf.Clamp(Mathf.PerlinNoise((x + off.x) * noiseScale, (z + off.z) * noiseScale), 0f, 1f) * s.y);
+                values[x, z] = (int)Mathf.Round(Mathf.Clamp(Mathf.PerlinNoise((x + off.x) * noiseScaleHeightmap, (z + off.z) * noiseScaleHeightmap), 0f, 1f) * s.y);
             }
         }
         return values;
@@ -69,6 +74,18 @@ public class GeneratePerlin : MonoBehaviour
 
             for (int x = 0; x < size.x; x++)
             {
+                for (int z = 0; z < size.z; z++)
+                {
+                    //Instantiate(voxelPrefab, new Vector3(x, heightmap[x, z], z), Quaternion.identity, transform);
+                    for (int i = heightmap[x, z]; i > -1; i--)
+                    {
+                        points[x, i, z] = true;
+                    }
+                }
+            }
+
+            for (int x = 0; x < size.x; x++)
+            {
                 for (int y = 0; y < size.y; y++)
                 {
                     for (int z = 0; z < size.z; z++) 
@@ -76,27 +93,14 @@ public class GeneratePerlin : MonoBehaviour
                        double value = openSimplex2S.Noise3_XZBeforeY((x + offset.x) * noiseScale, (y + offset.y) * noiseScale, (z + offset.z) * noiseScale);
                        if(value > minValue)
                         {
-                            points[x, y, z] = true;
+                            points[x, y, z] = false;
                         }
                     }
                 }
             }
 
-            for (int x = 0; x < size.x; x++)
-            {
-                for (int z = 0; z < size.z; z++)
-                {
-                    //Instantiate(voxelPrefab, new Vector3(x, heightmap[x, z], z), Quaternion.identity, transform);
-                    points[x, heightmap[x, z], z] = true;
-                    for (int i = heightmap[x, z] + 1; i < size.y; i++)
-                    {
-                        points[x, i, z] = false;
-                    }
-                }
-            }
-
             #region Instanciate
-            
+
             for (int x = 0; x < size.x; x++)
             {
                 for (int y = 0; y < size.y; y++)
@@ -154,6 +158,19 @@ public class GeneratePerlin : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void Update()
+    {
+        /*
+        if (Input.GetKey(key))
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity))
+            {
+
+            }
+        }*/
     }
 
     public static float Perlin3D(float x, float y, float z)

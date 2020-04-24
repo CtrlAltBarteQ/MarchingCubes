@@ -78,6 +78,8 @@ public class MarchCubes : MonoBehaviour
 
         triangles = tri;
 
+        mesh.MarkDynamic();
+
         mesh.Clear();
 
         mesh.vertices = verticies;
