@@ -12,34 +12,30 @@ public class MarchCubes : MonoBehaviour
 
     public MeshCollider meshCollider;
 
-    private void Start()
+    private void Awake()
+    {
+        //
+    }
+
+    public void Generate(bool[,,] points, Vector3 size)
     {
         mesh = obj.GetComponent<MeshFilter>().mesh;
         verticies = mesh.vertices;
         triangles = mesh.triangles;
         meshCollider = obj.GetComponent<MeshCollider>();
 
-        
-        /*bool[,,] p = new bool[3, 3, 3];
+        mesh.MarkDynamic();
 
-        p[1, 1, 0] = true;
-        p[1, 1, 1] = true;
-
-        Generate(p, new Vector3(3, 3, 3));*/
-    }
-
-    public void Generate(bool[,,] points, Vector3 size)
-    {
-        Vector3 pos = new Vector3(.5f, .5f, .5f);
+        Vector3 pos = new Vector3();
         List<Vector3> vertexes = new List<Vector3>();
 
         //Debug.Log(points[0, 10, 14]);
 
         int triangleCount = 0;
 
-        for (int x = 0; x < size.x - 1; x++)
+        for (int x = 0; x < size.x; x++)
         {
-            for (int z = 0; z < size.z - 1; z++)
+            for (int z = 0; z < size.z; z++)
             {
                 for (int y = 0; y < size.y - 1; y++)
                 {
@@ -77,8 +73,6 @@ public class MarchCubes : MonoBehaviour
         verticies = vertexes.ToArray();
 
         triangles = tri;
-
-        mesh.MarkDynamic();
 
         mesh.Clear();
 

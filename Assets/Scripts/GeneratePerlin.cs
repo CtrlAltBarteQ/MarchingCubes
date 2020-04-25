@@ -5,7 +5,6 @@ using Noise;
 
 public class GeneratePerlin : MonoBehaviour
 {
-    public KeyCode key;
 
     public Vector3 size;
     [Range(0f, 1f)]
@@ -13,17 +12,10 @@ public class GeneratePerlin : MonoBehaviour
 
     public MarchCubes mc;
 
-    public GameObject voxelPrefab;
-    public Color color;
-    public bool useSimplex = true;
-
-    public GameObject chunkPrefab;
+    private readonly bool useSimplex = true;
 
     public float noiseScale = .05f;
     public float noiseScaleHeightmap = .05f;
-
-    public bool sphere = false;
-    private List<Mesh> meshes = new List<Mesh>();
 
     public Vector3 offset;
 
@@ -65,16 +57,20 @@ public class GeneratePerlin : MonoBehaviour
 
 
 
-    void Start()
+    void Awake()
     {
+
+        offset = new Vector3(transform.position.x + 1, 0, transform.position.z + 1);
+
         if (useSimplex)
         {
-            bool[,,] points = new bool[(int)size.x, (int)size.y, (int)size.z];
-            int[,] heightmap = GenerateHeightmap(size, offset);
+            bool[,,] points = new bool[(int)size.x + 1, (int)size.y, (int)size.z + 1];
+            int[,] heightmap = GenerateHeightmap(new Vector3(size.x + 1, size.y, size.z + 1), offset);
 
-            for (int x = 0; x < size.x; x++)
+            //Heightmap generation
+            for (int x = 0; x <= size.x; x++)
             {
-                for (int z = 0; z < size.z; z++)
+                for (int z = 0; z <= size.z; z++)
                 {
                     //Instantiate(voxelPrefab, new Vector3(x, heightmap[x, z], z), Quaternion.identity, transform);
                     for (int i = heightmap[x, z]; i > -1; i--)
@@ -84,17 +80,19 @@ public class GeneratePerlin : MonoBehaviour
                 }
             }
 
-            for (int x = 0; x < size.x; x++)
+
+            // 3D noise caves generation
+            for (int x = 0; x < size.x + 1; x++)
             {
                 for (int y = 0; y < size.y; y++)
                 {
-                    for (int z = 0; z < size.z; z++) 
+                    for (int z = 0; z < size.z + 1; z++) 
                     {
                        double value = openSimplex2S.Noise3_XZBeforeY((x + offset.x) * noiseScale, (y + offset.y) * noiseScale, (z + offset.z) * noiseScale);
                        if(value > minValue)
-                        {
+                       {
                             points[x, y, z] = false;
-                        }
+                       }
                     }
                 }
             }
