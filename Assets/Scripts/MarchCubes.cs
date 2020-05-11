@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using System.Threading;
 
 public class MarchCubes : MonoBehaviour
 {
@@ -10,13 +12,80 @@ public class MarchCubes : MonoBehaviour
     public Vector3[] verticies;
     public int[] triangles;
 
-    public MeshCollider meshCollider;
+    public Vector3 size;
+    public bool[,,] points;
 
-    private void Awake()
+    public TriVer triVer;
+
+    public MeshCollider meshCollider;
+    public bool generate = false;
+
+    //public Queue<TriVer> triVers = new Queue<TriVer>();
+
+    public void RequestGeneration(Action<TriVer> callback)
     {
-        //
+        ThreadStart threadStart = delegate
+        {
+            GenerateThread(callback);
+        };
+
+        new Thread(threadStart).Start();
     }
 
+    void GenerateThread(Action<TriVer> callback)
+    {
+        TriVer triVer = GenerateMesh(points, size);
+        generate = true;
+    }
+
+    TriVer GenerateMesh(bool[,,] points, Vector3 size)
+    {
+        Vector3 pos = new Vector3();
+        List<Vector3> vertexes = new List<Vector3>();
+
+        int triangleCount = 0;
+
+        for (int x = 0; x < size.x; x++)
+        {
+            for (int z = 0; z < size.z; z++)
+            {
+                for (int y = 0; y < size.y - 1; y++)
+                {
+                    pos = new Vector3(x + .5f, y + .5f, z + .5f);
+
+                    int comb = CubeValue(points, pos);
+
+                    for (int i = 0; i < 16; i += 1)
+                    {
+                        if (triangulation[comb, i] == -1)
+                        {
+                            break;
+                        }
+                        else
+                        {
+
+                            //Debug.Log(triangulation[comb, i]);
+                            vertexes.Add(new Vector3(pos.x + translator[triangulation[comb, i]].x, pos.y + translator[triangulation[comb, i]].y, pos.z + translator[triangulation[comb, i]].z));
+                            triangleCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        int[] tri = new int[triangleCount];
+
+        for (int i = 0; i < triangleCount; i++)
+        {
+            tri[i] = i;
+        }
+
+        //Debug.Log(tri.Length);
+
+        return new TriVer(vertexes.ToArray(), tri);
+    }
+
+    /*
     public void Generate(bool[,,] points, Vector3 size)
     {
         mesh = obj.GetComponent<MeshFilter>().mesh;
@@ -83,6 +152,38 @@ public class MarchCubes : MonoBehaviour
         mesh.RecalculateNormals();
 
         meshCollider.sharedMesh = mesh;
+    }
+    */ 
+
+    public void OnMeshRecieved(TriVer triVer)
+    {
+        this.triVer = triVer;
+    }
+
+    private void Update()
+    {
+        if (generate)
+        {
+            mesh = obj.GetComponent<MeshFilter>().mesh;
+            meshCollider = obj.GetComponent<MeshCollider>();
+
+            mesh.MarkDynamic();
+
+
+            mesh.Clear();
+
+            
+
+            mesh.vertices = triVer.verticies;
+            mesh.triangles = triVer.triangles;
+
+            mesh.RecalculateBounds();
+            mesh.RecalculateNormals();
+
+            meshCollider.sharedMesh = mesh;
+
+            generate = false;
+        }
     }
 
     public int CubeValue(bool[,,] points, Vector3 pos)
@@ -383,4 +484,15 @@ public class MarchCubes : MonoBehaviour
     { 0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
     {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
     };
+}
+
+public class TriVer
+{
+    public Vector3[] verticies;
+    public int[] triangles;
+    public TriVer(Vector3[] verticies, int[] triangles)
+    {
+        this.verticies = verticies;
+        this.triangles = triangles;
+    }
 }

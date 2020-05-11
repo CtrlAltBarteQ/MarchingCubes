@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Noise;
+using System;
+using System.Threading;
 
 public class GeneratePerlin : MonoBehaviour
 {
@@ -121,7 +123,10 @@ public class GeneratePerlin : MonoBehaviour
 
             //Debug.Log(points[0, 10, 14]);
 
-            mc.Generate(points, size);
+            mc.points = points;
+            mc.size = size;
+
+            mc.RequestGeneration(mc.OnMeshRecieved);
         }
         else
         {
@@ -157,6 +162,8 @@ public class GeneratePerlin : MonoBehaviour
             }
         }
     }
+
+
 
     private void Update()
     {
