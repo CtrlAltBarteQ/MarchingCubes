@@ -163,7 +163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c30ff195addcaaf4f81589b51e99795b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  vievDst: 30
+  vievDst: 100
   player: {fileID: 2008818197}
   chunksVisible: 0
   chunkPrefab: {fileID: 8148877067133020347, guid: 73ad904f28a1d7343bda85ff3b15bc2b,
@@ -373,6 +373,10 @@ PrefabInstance:
       propertyPath: m_audioModuleState
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 11496292, guid: 0abab5bb77339e4428787a870eb31bd3, type: 3}
+      propertyPath: m_advancedModuleState
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 22424132, guid: 0abab5bb77339e4428787a870eb31bd3, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: -0.20007324
@@ -530,7 +534,7 @@ MonoBehaviour:
   sensitivity: 8
   moveSpeed: 9
   jumpHeight: 9
-  gravity: 0
+  gravity: -9.7
 --- !u!143 &2008818193
 CharacterController:
   m_ObjectHideFlags: 0

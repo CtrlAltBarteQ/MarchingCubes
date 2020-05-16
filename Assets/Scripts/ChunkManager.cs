@@ -40,7 +40,7 @@ public class ChunkManager : MonoBehaviour
 
                 if(chunkDict.ContainsKey(viewedChunk))
                 {
-                    Debug.Log("contains");
+                    //Debug.Log("contains");
                 }
                 else
                 {
