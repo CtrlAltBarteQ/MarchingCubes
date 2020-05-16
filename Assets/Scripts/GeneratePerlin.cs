@@ -126,6 +126,7 @@ public class GeneratePerlin : MonoBehaviour
             mc.points = points;
             mc.size = size;
 
+            //Debug.Log("generating");
             mc.RequestGeneration(mc.OnMeshRecieved);
         }
         else

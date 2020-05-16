@@ -18,9 +18,8 @@ public class MarchCubes : MonoBehaviour
     public TriVer triVer;
 
     public MeshCollider meshCollider;
-    public bool generate = false;
 
-    //public Queue<TriVer> triVers = new Queue<TriVer>();
+    public Queue<Q<TriVer>> triVers = new Queue<Q<TriVer>>();
 
     public void RequestGeneration(Action<TriVer> callback)
     {
@@ -34,8 +33,9 @@ public class MarchCubes : MonoBehaviour
 
     void GenerateThread(Action<TriVer> callback)
     {
+        //Debug.Log("engueueing");
         TriVer triVer = GenerateMesh(points, size);
-        generate = true;
+        triVers.Enqueue(new Q<TriVer>(callback, triVer));
     }
 
     TriVer GenerateMesh(bool[,,] points, Vector3 size)
@@ -157,32 +157,35 @@ public class MarchCubes : MonoBehaviour
 
     public void OnMeshRecieved(TriVer triVer)
     {
-        this.triVer = triVer;
+
+
+        //Debug.Log(triVer);
+        mesh = obj.GetComponent<MeshFilter>().mesh;
+        meshCollider = obj.GetComponent<MeshCollider>();
+
+        mesh.MarkDynamic();
+
+
+        mesh.Clear();
+
+
+
+        mesh.vertices = triVer.verticies;
+        mesh.triangles = triVer.triangles;
+
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+
+        meshCollider.sharedMesh = mesh;
     }
 
     private void Update()
     {
-        if (generate)
+        if (triVers.Count > 0)
         {
-            mesh = obj.GetComponent<MeshFilter>().mesh;
-            meshCollider = obj.GetComponent<MeshCollider>();
-
-            mesh.MarkDynamic();
-
-
-            mesh.Clear();
-
-            
-
-            mesh.vertices = triVer.verticies;
-            mesh.triangles = triVer.triangles;
-
-            mesh.RecalculateBounds();
-            mesh.RecalculateNormals();
-
-            meshCollider.sharedMesh = mesh;
-
-            generate = false;
+            //Debug.Log("dequeued");
+            Q<TriVer> tv = triVers.Dequeue();
+            tv.callback(tv.param);
         }
     }
 
@@ -494,5 +497,17 @@ public class TriVer
     {
         this.verticies = verticies;
         this.triangles = triangles;
+    }
+}
+
+public class Q<T>
+{
+    public readonly Action<T> callback;
+    public readonly T param;
+
+    public Q(Action<T> callback, T parameter)
+    {
+        this.callback = callback;
+        this.param = parameter;
     }
 }
