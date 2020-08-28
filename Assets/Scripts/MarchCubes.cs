@@ -40,7 +40,7 @@ public class MarchCubes : MonoBehaviour
 
     TriVer GenerateMesh(bool[,,] points, Vector3 size)
     {
-        Vector3 pos = new Vector3();
+        Vector3 pos;
         List<Vector3> vertexes = new List<Vector3>();
 
         int triangleCount = 0;
@@ -173,7 +173,7 @@ public class MarchCubes : MonoBehaviour
         mesh.vertices = triVer.verticies;
         mesh.triangles = triVer.triangles;
 
-        mesh.RecalculateBounds();
+        //mesh.RecalculateBounds();
         mesh.RecalculateNormals();
 
         meshCollider.sharedMesh = mesh;

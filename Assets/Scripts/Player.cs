@@ -6,7 +6,7 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     public CharacterController cc;
-    public Camera camera;
+    public new Camera camera;
 
     public float sensitivity = 8f;
     private float upDown;
