@@ -14,7 +14,10 @@ public class MarchCubes : MonoBehaviour
 	public int[] triangles;
 
 	public Vector3 size;
-	public bool[,,] points;
+	public float[,,] points;
+
+	[Range(-1f, 1f)]
+	public float minValue = 0f;
 
 	public TriVer triVer;
 
@@ -34,14 +37,12 @@ public class MarchCubes : MonoBehaviour
 
 	void GenerateThread(Action<TriVer> callback)
 	{
-		//Debug.Log("engueueing");
 		TriVer triVer = GenerateMesh(points, size);
 		triVers.Enqueue(new Q<TriVer>(callback, triVer));
 	}
 
-	TriVer GenerateMesh(bool[,,] points, Vector3 size)
+	TriVer GenerateMesh(float[,,] points, Vector3 size)
 	{
-		int3 pos;
 		List<Vector3> vertexes = new List<Vector3>();
 
 		int triangleCount = 0;
@@ -52,23 +53,35 @@ public class MarchCubes : MonoBehaviour
 			{
 				for (int y = 0; y < size.y - 1; y++)
 				{
-					pos = new int3(x, y, z);
 
-					int comb = CubeValue(points, pos);
+					int cubeVal = CubeValue(points, new int3(x, y, z));
 
-					for (int i = 0; i < 16; i += 1)
+					for (int i = 0; triangulation[cubeVal, i] != -1; i += 3)
 					{
-						if (triangulation[comb, i] == -1)
-						{
-							break;
-						}
-						else
-						{
 
-							//Debug.Log(triangulation[comb, i]);
-							vertexes.Add(new Vector3(pos.x + translator[triangulation[comb, i]].x, pos.y + translator[triangulation[comb, i]].y, pos.z + translator[triangulation[comb, i]].z));
-							triangleCount++;
-						}
+						int x0 = cornerIndexAFromEdge[triangulation[cubeVal, i]];
+						int x1 = cornerIndexBFromEdge[triangulation[cubeVal, i]];
+
+						//TODO: Check out https://github.com/SebLague/Marching-Cubes/blob/4fd221eb023b90a0d49f0dd7ea886ec2e2a8c3ac/Assets/Scripts/Compute/MarchingCubes.compute#L64, do something similar
+
+						vertexes.Add(new Vector3(
+							x + translator[triangulation[cubeVal, i]].x,
+							y + translator[triangulation[cubeVal, i]].y,
+							z + translator[triangulation[cubeVal, i]].z
+						));
+						vertexes.Add(new Vector3(
+							x + translator[triangulation[cubeVal, i + 1]].x,
+							y + translator[triangulation[cubeVal, i + 1]].y,
+							z + translator[triangulation[cubeVal, i + 1]].z
+						));
+						vertexes.Add(new Vector3(
+							x + translator[triangulation[cubeVal, i + 2]].x,
+							y + translator[triangulation[cubeVal, i + 2]].y,
+							z + translator[triangulation[cubeVal, i + 2]].z
+						));
+
+
+						triangleCount += 3;
 					}
 				}
 			}
@@ -81,30 +94,21 @@ public class MarchCubes : MonoBehaviour
 			tri[i] = i;
 		}
 
-		//Debug.Log(tri.Length);
 
 		return new TriVer(vertexes.ToArray(), tri);
 	}
 
 	public void OnMeshRecieved(TriVer triVer)
 	{
-
-
-		//Debug.Log(triVer);
 		mesh = obj.GetComponent<MeshFilter>().mesh;
 		meshCollider = obj.GetComponent<MeshCollider>();
 
-		mesh.MarkDynamic();
-
-
 		mesh.Clear();
-
 
 
 		mesh.vertices = triVer.verticies;
 		mesh.triangles = triVer.triangles;
 
-		//mesh.RecalculateBounds();
 		mesh.RecalculateNormals();
 
 		meshCollider.sharedMesh = mesh;
@@ -114,32 +118,31 @@ public class MarchCubes : MonoBehaviour
 	{
 		if (triVers.Count > 0)
 		{
-			//Debug.Log("dequeued");
 			Q<TriVer> tv = triVers.Dequeue();
 			tv.callback(tv.param);
 		}
 	}
 
-	public int CubeValue(bool[,,] points, int3 pos)
+	public int CubeValue(float[,,] points, int3 pos)
 	{
 		int value = 0;
 
-		if (points[pos.x + 1, pos.y, pos.z + 1])
-			value += 1;
-		if (points[pos.x, pos.y, pos.z + 1])
-			value += 2;
-		if (points[pos.x, pos.y, pos.z])
-			value += 4;
-		if (points[pos.x + 1, pos.y, pos.z])
-			value += 8;
-		if (points[pos.x + 1, pos.y + 1, pos.z + 1])
-			value += 16;
-		if (points[pos.x, pos.y + 1, pos.z + 1])
-			value += 32;
-		if (points[pos.x, pos.y + 1, pos.z])
-			value += 64;
-		if (points[pos.x + 1, pos.y + 1, pos.z])
-			value += 128;
+		if (points[pos.x + 1, pos.y, pos.z + 1] < minValue)
+			value |= 1;
+		if (points[pos.x, pos.y, pos.z + 1] < minValue)
+			value |= 2;
+		if (points[pos.x, pos.y, pos.z] < minValue)
+			value |= 4;
+		if (points[pos.x + 1, pos.y, pos.z] < minValue)
+			value |= 8;
+		if (points[pos.x + 1, pos.y + 1, pos.z + 1] < minValue)
+			value |= 16;
+		if (points[pos.x, pos.y + 1, pos.z + 1] < minValue)
+			value |= 32;
+		if (points[pos.x, pos.y + 1, pos.z] < minValue)
+			value |= 64;
+		if (points[pos.x + 1, pos.y + 1, pos.z] < minValue)
+			value |= 128;
 
 		return value;
 	}
@@ -176,7 +179,7 @@ public class MarchCubes : MonoBehaviour
 		new Vector3(0.5f, 0f, -0.5f),
 	};
 
-	public int[,] triangulation = {
+	private int[,] triangulation = {
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 	{ 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 	{ 0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
@@ -434,6 +437,10 @@ public class MarchCubes : MonoBehaviour
 	{ 0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
 	};
+
+	private int[] cornerIndexAFromEdge = { 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3 };
+
+	private int[] cornerIndexBFromEdge = { 1, 2, 3, 0, 5, 6, 7, 4, 4, 5, 6, 7 };
 }
 
 public class TriVer
